@@ -1,7 +1,9 @@
 package com;
 
 import com.model.Tokens;
+import com.model.UserLoginResponse;
 import com.model.UserRegisterResponse;
+import io.qameta.allure.Step;
 import org.apache.commons.lang3.RandomStringUtils;
 
 import java.util.HashMap;
@@ -18,6 +20,7 @@ public class UserOperations {
      возвращает мапу с данными: имя, пароль, имэйл
      если регистрация не удалась, возвращает пустую мапу
      */
+    @Step("Регистрируем нового пользователя")
     public Map<String, String> register() {
 
         // с помощью библиотеки RandomStringUtils генерируем имэйл
@@ -64,6 +67,7 @@ public class UserOperations {
      метод удаления пользователя по токену, возвращенному после создания
      пользователя. Удаляем только в случае, если token заполнен.
      */
+    @Step("Удаляем пользователя")
     public void delete() {
         if (Tokens.getAccessToken() == null) {
             return;
@@ -77,4 +81,20 @@ public class UserOperations {
                 .statusCode(202);
     }
 
+    public void login(String email, String password) {
+        Map<String, String> inputDataMap = new HashMap<>();
+        inputDataMap.put("email", email);
+        inputDataMap.put("password", password);
+
+        UserLoginResponse response = given()
+                .spec(Base.getBaseSpec())
+                .and()
+                .body(inputDataMap)
+                .when()
+                .post("auth/login")
+                .body()
+                .as(UserLoginResponse.class);
+
+        Tokens.setAccessToken(response.getAccessToken().substring(7));
+    }
 }
